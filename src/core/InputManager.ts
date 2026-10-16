@@ -30,18 +30,8 @@ export interface ControlInputs {
 
 export class InputManager {
   private keys: Record<string, boolean> = {};
-  private prevDiffLockKey = false;
-  private prevLowRangeKey = false;
-  private prevWinchKey = false;
-  private prevResetKey = false;
-  private prevAudioKey = false;
-  private prevCameraKey = false;
-  private prevTimeKey = false;
-  private prevBoardsKey = false;
-  private prevPaintKey = false;
-  private prevTabKey = false;
-  private prevCoopKey = false;
-  private prevDigitKeys: Record<string, boolean> = {};
+  private justPressed: Set<string> = new Set();
+  private prevGpButtons: Record<number, boolean> = {};
 
   private activeInputs: ControlInputs = {
     throttle: 0,
@@ -85,11 +75,19 @@ export class InputManager {
 
   public clearKeys(): void {
     this.keys = {};
+    this.justPressed.clear();
   }
 
   private onKeyDown(e: KeyboardEvent): void {
     if (this.gameKeyCodes.has(e.code) || e.key === ' ' || e.code === 'Tab' || e.key.startsWith('Arrow')) {
       e.preventDefault();
+    }
+    // Record rising edge for single-press toggles
+    if (!e.repeat && !this.keys[e.code]) {
+      this.justPressed.add(e.code);
+      if (e.key) {
+        this.justPressed.add(e.key.toLowerCase());
+      }
     }
     this.keys[e.code] = true;
     if (e.key) {
@@ -108,6 +106,25 @@ export class InputManager {
     return names.some((k) => !!this.keys[k]);
   }
 
+  private consumeJustPressed(...names: string[]): boolean {
+    let triggered = false;
+    for (const name of names) {
+      if (this.justPressed.has(name)) {
+        triggered = true;
+        this.justPressed.delete(name);
+      }
+    }
+    return triggered;
+  }
+
+  private checkGpPressed(gp: Gamepad | null, buttonIndex: number): boolean {
+    if (!gp) return false;
+    const isDown = !!gp.buttons[buttonIndex]?.pressed;
+    const wasDown = !!this.prevGpButtons[buttonIndex];
+    this.prevGpButtons[buttonIndex] = isDown;
+    return isDown && !wasDown;
+  }
+
   /**
    * Sample keyboard and standard Gamepad inputs
    */
@@ -124,19 +141,8 @@ export class InputManager {
     let p2Steer = 0;
     let p2Handbrake = false;
 
-    let diffLockPress = false;
-    let lowRangePress = false;
-    let winchPress = false;
     let winchPull = false;
     let winchRelease = false;
-    let resetPress = false;
-    let audioPress = false;
-    let cameraPress = false;
-    let timePress = false;
-    let boardsPress = false;
-    let paintPress = false;
-    let tabPress = false;
-    let coopPress = false;
 
     // 1. Keyboard: Player 1 (W, S, A, D, Space)
     if (this.isPressed('KeyW', 'w', 'z')) throttle = 1.0;
@@ -161,36 +167,23 @@ export class InputManager {
       if (p2Handbrake) handbrake = true;
     }
 
-    if (this.isPressed('KeyL', 'l')) diffLockPress = true;
-    if (this.isPressed('KeyH', 'h')) lowRangePress = true;
-    if (this.isPressed('KeyE', 'e')) winchPress = true;
     if (this.isPressed('KeyF', 'f')) winchPull = true;
     if (this.isPressed('KeyV', 'v')) winchRelease = true;
-    if (this.isPressed('KeyR', 'r')) resetPress = true;
-    if (this.isPressed('KeyM', 'm')) audioPress = true;
-    if (this.isPressed('KeyC', 'c')) cameraPress = true;
-    if (this.isPressed('KeyT', 't')) timePress = true;
-    if (this.isPressed('KeyB', 'b')) boardsPress = true;
-    if (this.isPressed('KeyP', 'p')) paintPress = true;
-    if (this.isPressed('Tab')) tabPress = true;
-    if (this.isPressed('KeyK', 'k')) coopPress = true;
 
     // Direct vehicle number selection [1], [2], [3], [4]
     let selectedNum: number | null = null;
     const digitCodes = ['Digit1', 'Digit2', 'Digit3', 'Digit4'];
     for (let i = 0; i < digitCodes.length; i++) {
-      const code = digitCodes[i];
-      const pressed = this.isPressed(code, (i + 1).toString());
-      if (pressed && !this.prevDigitKeys[code]) {
+      if (this.consumeJustPressed(digitCodes[i], (i + 1).toString())) {
         selectedNum = i;
       }
-      this.prevDigitKeys[code] = pressed;
     }
 
     // 3. Gamepad API
+    let gp: Gamepad | null = null;
     if (typeof navigator !== 'undefined' && navigator.getGamepads) {
       const gamepads = navigator.getGamepads();
-      const gp = gamepads[0];
+      gp = gamepads[0] ?? null;
       if (gp && gp.connected) {
         const axisX = gp.axes[0] ?? 0;
         if (Math.abs(axisX) > 0.12) steer = axisX;
@@ -201,13 +194,8 @@ export class InputManager {
         if (lt > 0.05) brake = Math.max(brake, lt);
 
         if (gp.buttons[0]?.pressed) handbrake = true;
-        if (gp.buttons[3]?.pressed) diffLockPress = true;
-        if (gp.buttons[2]?.pressed) lowRangePress = true;
-        if (gp.buttons[1]?.pressed) winchPress = true;
         if (gp.buttons[5]?.pressed) winchPull = true;
         if (gp.buttons[4]?.pressed) winchRelease = true;
-        if (gp.buttons[8]?.pressed || gp.buttons[9]?.pressed) resetPress = true;
-        if (gp.buttons[10]?.pressed) cameraPress = true;
       }
 
       // Gamepad 2 for Player 2
@@ -234,33 +222,21 @@ export class InputManager {
     this.activeInputs.p2Steer = p2Steer;
     this.activeInputs.p2Handbrake = p2Handbrake;
 
-    this.activeInputs.switchNextVehicle = tabPress && !this.prevTabKey;
+    this.activeInputs.switchNextVehicle = this.consumeJustPressed('Tab');
     this.activeInputs.selectVehicleIndex = selectedNum;
-    this.activeInputs.toggleCoop = coopPress && !this.prevCoopKey;
+    this.activeInputs.toggleCoop = this.consumeJustPressed('KeyK', 'k');
 
-    this.activeInputs.toggleDiffLock = diffLockPress && !this.prevDiffLockKey;
-    this.activeInputs.toggleLowRange = lowRangePress && !this.prevLowRangeKey;
-    this.activeInputs.winchAttachToggle = winchPress && !this.prevWinchKey;
+    this.activeInputs.toggleDiffLock = this.consumeJustPressed('KeyL', 'l') || this.checkGpPressed(gp, 3);
+    this.activeInputs.toggleLowRange = this.consumeJustPressed('KeyH', 'h') || this.checkGpPressed(gp, 2);
+    this.activeInputs.winchAttachToggle = this.consumeJustPressed('KeyE', 'e') || this.checkGpPressed(gp, 1);
     this.activeInputs.winchPull = winchPull;
     this.activeInputs.winchRelease = winchRelease;
-    this.activeInputs.resetVehicle = resetPress && !this.prevResetKey;
-    this.activeInputs.toggleAudio = audioPress && !this.prevAudioKey;
-    this.activeInputs.toggleCamera = cameraPress && !this.prevCameraKey;
-    this.activeInputs.toggleTimeOfDay = timePress && !this.prevTimeKey;
-    this.activeInputs.toggleRecoveryBoards = boardsPress && !this.prevBoardsKey;
-    this.activeInputs.togglePaintColor = paintPress && !this.prevPaintKey;
-
-    this.prevDiffLockKey = diffLockPress;
-    this.prevLowRangeKey = lowRangePress;
-    this.prevWinchKey = winchPress;
-    this.prevResetKey = resetPress;
-    this.prevAudioKey = audioPress;
-    this.prevCameraKey = cameraPress;
-    this.prevTimeKey = timePress;
-    this.prevBoardsKey = boardsPress;
-    this.prevPaintKey = paintPress;
-    this.prevTabKey = tabPress;
-    this.prevCoopKey = coopPress;
+    this.activeInputs.resetVehicle = this.consumeJustPressed('KeyR', 'r') || this.checkGpPressed(gp, 8) || this.checkGpPressed(gp, 9);
+    this.activeInputs.toggleAudio = this.consumeJustPressed('KeyM', 'm');
+    this.activeInputs.toggleCamera = this.consumeJustPressed('KeyC', 'c') || this.checkGpPressed(gp, 10);
+    this.activeInputs.toggleTimeOfDay = this.consumeJustPressed('KeyT', 't');
+    this.activeInputs.toggleRecoveryBoards = this.consumeJustPressed('KeyB', 'b');
+    this.activeInputs.togglePaintColor = this.consumeJustPressed('KeyP', 'p');
 
     return this.activeInputs;
   }

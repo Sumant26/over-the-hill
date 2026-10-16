@@ -97,10 +97,13 @@ export async function bootstrapApp(): Promise<void> {
   });
 
   // 12. Decoupled Game Loop
+  let currentBrakeInput = 0;
+
   const gameLoop = new GameLoop(
     // Fixed Physics Update (60Hz)
     (fixedDt) => {
       const inputs = inputManager.update();
+      currentBrakeInput = inputs.brake;
 
       // Convoy Vehicle Switching (TAB or keys 1..4)
       if (inputs.switchNextVehicle) {
@@ -290,8 +293,8 @@ export async function bootstrapApp(): Promise<void> {
       particles.update(frameDt);
 
       // 6. Dynamic Brake Lights
-      const isBraking = (telemetry.speedKmh > 2 && telemetry.currentGear > 0 && inputManager.update().brake > 0.05) ||
-                        (telemetry.currentGear === -1 && inputManager.update().brake > 0.05);
+      const isBraking = (telemetry.speedKmh > 2 && telemetry.currentGear > 0 && currentBrakeInput > 0.05) ||
+                        (telemetry.currentGear === -1 && currentBrakeInput > 0.05);
       activeModel.setBraking(isBraking);
 
       // 7. Landmark Discovery Check
