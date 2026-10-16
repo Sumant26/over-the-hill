@@ -1,0 +1,488 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --bg-glass: rgba(18, 22, 29, 0.78);
+  --border-glass: rgba(255, 255, 255, 0.14);
+  --accent-amber: #f39c12;
+  --accent-green: #2ecc71;
+  --accent-red: #e74c3c;
+  --accent-blue: #3498db;
+  --text-main: #f5f6fa;
+  --text-muted: #8b9bb4;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #d6e5ed;
+  font-family: var(--font-main);
+  color: var(--text-main);
+}
+
+#canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Glassmorphism Panel Base */
+.glass-panel {
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+}
+
+/* App Header & Title */
+.header-overlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-overlay h1 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  text-transform: lowercase;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+
+.header-badge {
+  background: rgba(245, 176, 38, 0.2);
+  color: var(--accent-amber);
+  border: 1px solid var(--accent-amber);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Quick Action Bar (Top Center) */
+.quick-actions-bar {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  padding: 6px 12px;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  max-width: calc(100vw - 440px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.quick-actions-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.action-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-family: var(--font-main);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.action-btn:hover {
+  background: rgba(243, 156, 18, 0.25);
+  border-color: var(--accent-amber);
+  color: var(--accent-amber);
+  transform: translateY(-1px);
+}
+
+.action-btn:active {
+  transform: translateY(1px);
+}
+
+/* Discovery Banner / Notification */
+.discovery-banner {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-color: var(--accent-amber);
+  background: rgba(18, 22, 29, 0.92);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+}
+
+.banner-pop {
+  animation: banner-enter 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+@keyframes banner-enter {
+  from { opacity: 0; transform: translate(-50%, -20px) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+.banner-icon {
+  font-size: 1.8rem;
+}
+
+.banner-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.banner-sub {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--accent-amber);
+}
+
+/* Inclinometer HUD (Top Right) */
+.inclinometer-hud {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+  width: 190px;
+  padding: 14px;
+  text-align: center;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.inclinometer-hud.critical-tilt {
+  border-color: var(--accent-red);
+  box-shadow: 0 0 20px rgba(231, 76, 60, 0.5);
+  animation: pulse-danger 0.8s infinite alternate;
+}
+
+@keyframes pulse-danger {
+  from { box-shadow: 0 0 10px rgba(231, 76, 60, 0.3); }
+  to { box-shadow: 0 0 25px rgba(231, 76, 60, 0.7); }
+}
+
+.inclinometer-header {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.inclinometer-dial {
+  position: relative;
+  width: 86px;
+  height: 86px;
+  margin: 0 auto 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.inclinometer-dial .horizon-line {
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.inclinometer-dial .truck-silhouette {
+  font-size: 2.1rem;
+  transition: transform 0.1s ease-out;
+}
+
+.inclinometer-data {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 4px;
+}
+
+.data-badge {
+  display: flex;
+  flex-direction: column;
+}
+
+.data-badge .label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.data-badge .value {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.rollover-warning {
+  margin-top: 8px;
+  padding: 4px;
+  background: rgba(231, 76, 60, 0.25);
+  border: 1px solid var(--accent-red);
+  color: var(--accent-red);
+  font-size: 0.72rem;
+  font-weight: 800;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* Gauge Cluster (Bottom Center / Right) */
+.gauge-cluster {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10;
+  width: 325px;
+  padding: 16px 20px;
+}
+
+.gauge-top-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.compass-badge, .mode-badge {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+}
+
+.compass-badge {
+  color: var(--accent-amber);
+}
+
+.gauge-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.speed-display {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.speed-number {
+  font-family: var(--font-mono);
+  font-size: 2.8rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+}
+
+.speed-unit {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+.gear-display {
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 4px 14px;
+  border-radius: 8px;
+  color: var(--accent-amber);
+}
+
+.gear-display.reverse {
+  color: var(--accent-red);
+  border-color: var(--accent-red);
+}
+
+/* RPM Bar */
+.rpm-meter {
+  margin-bottom: 12px;
+}
+
+.rpm-bar-container {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.rpm-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #2ecc71, #f1c40f);
+  border-radius: 4px;
+  transition: width 0.05s ease-out;
+}
+
+.rpm-bar.redline {
+  background: linear-gradient(90deg, #f1c40f, #e74c3c);
+}
+
+.rpm-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+#rpm-text {
+  font-family: var(--font-mono);
+  color: #fff;
+}
+
+/* Badges Row */
+.badges-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.badge {
+  flex: 1;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 6px 4px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+
+.badge-tcase.active-low {
+  background: rgba(243, 156, 18, 0.2);
+  border-color: var(--accent-amber);
+  color: var(--accent-amber);
+}
+
+.badge-diff.active-lock {
+  background: rgba(231, 76, 60, 0.2);
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+.badge-surface {
+  color: #fff;
+}
+
+/* Winch HUD Bar */
+.winch-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.winch-title {
+  color: var(--text-muted);
+}
+
+.winch-info {
+  font-family: var(--font-mono);
+  color: #fff;
+}
+
+.winch-info.attached {
+  color: var(--accent-amber);
+  font-weight: 700;
+}
+
+/* Controls Guide (Bottom Left) */
+.controls-guide {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 10;
+  padding: 12px 16px;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  max-width: 290px;
+}
+
+.controls-guide .title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  row-gap: 3px;
+}
+
+.keycap {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: #fff;
+  text-align: center;
+}
+
+.ctrl-desc {
+  color: var(--text-muted);
+}

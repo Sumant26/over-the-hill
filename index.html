@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚙</text></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A stylized 3D open-world 4x4 off-roading browser game inspired by Over the Hill. Experience realistic raycast suspension, mud physics, and mechanical winch recovery." />
+    <title>Over the Hill | 4x4 Off-Road Experience</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <!-- 3D Canvas Mount Point -->
+    <div id="canvas-container"></div>
+
+    <!-- Header Overlay -->
+    <header class="header-overlay glass-panel">
+      <h1>🚙 Over the Hill</h1>
+      <span class="header-badge">Wilderness Expedition</span>
+    </header>
+
+    <!-- Top Quick Action Buttons -->
+    <nav class="quick-actions-bar glass-panel" id="quick-actions">
+      <button class="action-btn" id="btn-convoy" title="Switch Active Convoy Truck (Tab / 1-4)">👥 Convoy (Tab)</button>
+      <button class="action-btn" id="btn-coop" title="Toggle 2-Player Local Co-op (K)">🎮 2P Co-op (K)</button>
+      <button class="action-btn" id="btn-paint" title="Cycle Convoy Paint (P)">🎨 Paint (P)</button>
+      <button class="action-btn" id="btn-cam" title="Toggle Camera Mode (C)">📷 Cam (C)</button>
+      <button class="action-btn" id="btn-time" title="Toggle Day/Night Cycle (T)">🌅 Time (T)</button>
+      <button class="action-btn" id="btn-winch" title="Toggle Winch (E)">🪝 Winch (E)</button>
+      <button class="action-btn" id="btn-diff" title="Lock Differentials (L)">🔒 Diff (L)</button>
+      <button class="action-btn" id="btn-low" title="4WD Low Range Crawl (H)">⛰️ 4L/4H (H)</button>
+      <button class="action-btn" id="btn-board" title="Deploy Traction Boards (B)">🟧 Boards (B)</button>
+      <button class="action-btn" id="btn-reset" title="Reset Vehicle Upright (R)">🔄 Reset (R)</button>
+    </nav>
+
+    <!-- Controls Guide -->
+    <aside class="controls-guide glass-panel" id="controls-guide">
+      <div class="title">🕹️ Expedition Controls</div>
+      <div class="controls-grid">
+        <span class="keycap">W / S</span>
+        <span class="ctrl-desc">P1 Throttle / Reverse</span>
+        <span class="keycap">A / D</span>
+        <span class="ctrl-desc">P1 Steering (Left / Right)</span>
+        <span class="keycap">SPACE</span>
+        <span class="ctrl-desc">Handbrake Slide</span>
+        <span class="keycap">TAB / 1-4</span>
+        <span class="ctrl-desc">Switch Convoy Truck</span>
+        <span class="keycap">K</span>
+        <span class="ctrl-desc">Toggle 2-Player Co-op</span>
+        <span class="keycap">ARROWS</span>
+        <span class="ctrl-desc">Player 2 Drive (Co-op)</span>
+        <span class="keycap">P</span>
+        <span class="ctrl-desc">Cycle Vehicle Colors</span>
+        <span class="keycap">C</span>
+        <span class="ctrl-desc">Camera Modes</span>
+        <span class="keycap">T</span>
+        <span class="ctrl-desc">Day / Night Cycle</span>
+        <span class="keycap">E</span>
+        <span class="ctrl-desc">Attach / Release Winch</span>
+        <span class="keycap">F / V</span>
+        <span class="ctrl-desc">Winch In / Out</span>
+        <span class="keycap">B</span>
+        <span class="ctrl-desc">Deploy Traction Boards</span>
+        <span class="keycap">L</span>
+        <span class="ctrl-desc">Differential Lock</span>
+        <span class="keycap">H</span>
+        <span class="ctrl-desc">Transfer Case 4H / 4L</span>
+        <span class="keycap">R</span>
+        <span class="ctrl-desc">Reset Upright</span>
+        <span class="keycap">Drag</span>
+        <span class="ctrl-desc">Orbit Camera</span>
+      </div>
+    </aside>
+
+    <script type="module" src="./src/main.ts"></script>
+    <script>
+      // Wire quick action buttons to dispatch synthetic keyboard events
+      function bindBtn(id, code, key) {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.addEventListener('click', () => {
+            window.dispatchEvent(new KeyboardEvent('keydown', { code, key }));
+            setTimeout(() => {
+              window.dispatchEvent(new KeyboardEvent('keyup', { code, key }));
+            }, 80);
+          });
+        }
+      }
+      bindBtn('btn-convoy', 'Tab', 'Tab');
+      bindBtn('btn-coop', 'KeyK', 'k');
+      bindBtn('btn-paint', 'KeyP', 'p');
+      bindBtn('btn-cam', 'KeyC', 'c');
+      bindBtn('btn-time', 'KeyT', 't');
+      bindBtn('btn-winch', 'KeyE', 'e');
+      bindBtn('btn-diff', 'KeyL', 'l');
+      bindBtn('btn-low', 'KeyH', 'h');
+      bindBtn('btn-board', 'KeyB', 'b');
+      bindBtn('btn-reset', 'KeyR', 'r');
+    </script>
+  </body>
+</html>
